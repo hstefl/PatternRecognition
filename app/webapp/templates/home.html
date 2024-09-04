@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Table</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .container {
+            width: 100%;
+            max-width: 100%;
+        }
+        .table {
+            width: 100%;
+            table-layout: auto; /* Allows columns to adjust based on content */
+            word-wrap: break-word; /* Ensures content wraps within the cells */
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="mt-5">Recognitions</h1>
+    {{ recognitions_html_table | safe }}
+</div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+confluent-kafka==2.5.0
+kafka-python-ng==2.2.2
+scapy==2.5.0
+sqlalchemy==2.0.32
+python-dotenv==1.0.0

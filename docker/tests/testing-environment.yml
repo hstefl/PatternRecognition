@@ -1,0 +1,117 @@
+version: '3.8'
+
+# One common network for the tests
+networks:
+  kafka-net:
+    driver: bridge
+
+# Shared persistent volume
+volumes:
+  sqlite_data:
+
+services:
+  recognizer:
+    build:
+      context: ${BUILD_CONTEXT}
+      dockerfile: docker/recognizer/Dockerfile
+    image: jstefl/pattern-recognition-recognizer:latest
+    container_name: pattern-recognition-recognizer
+    networks:
+      - kafka-net
+    volumes:
+      - sqlite_data:/data
+    env_file:
+      - ${BUILD_CONTEXT}/.env
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+
+  webapp:
+    build:
+      context: ${BUILD_CONTEXT}
+      dockerfile: docker/webapp/Dockerfile
+    image: jstefl/pattern-recognition-webapp:latest
+    container_name: pattern-recognition-webapp
+    ports:
+      - "5000:5000"
+    networks:
+      - kafka-net
+    volumes:
+      - sqlite_data:/data
+    env_file:
+      - ${BUILD_CONTEXT}/.env
+
+  traffic-server-with-agent:
+    build:
+      context: ${BUILD_CONTEXT}
+      dockerfile: docker/tests/traffic-server/Dockerfile
+    image: jstefl/pattern-recognition-test-traffic-server:latest
+    container_name: pattern-recognition-test-traffic-server
+    ports:
+      - "5111:5000"
+    networks:
+      - kafka-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  traffic-client:
+    build:
+      context: ${BUILD_CONTEXT}
+      dockerfile: docker/tests/traffic-client/Dockerfile
+    image: jstefl/pattern-recognition-test-traffic-client:latest
+    container_name: pattern-recognition-test-traffic-client
+    networks:
+      - kafka-net
+
+  # Zookeeper acts as a centralized service and is used to maintain naming and configuration data and to provide
+  # flexible and robust synchronization within distributed systems.
+  # Zookeeper keeps track of status of the Kafka cluster nodes, and it also keeps track of Kafka topics, partitions etc.
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    networks:
+      - kafka-net
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    networks:
+      - kafka-net
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server kafka:9092 | grep -q 'ApiVersions'" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # Kafdrop is not necessary but will be useful for debugging purposes (this is OK for PoC).
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    networks:
+      - kafka-net
+    depends_on:
+      - kafka
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9092
+      JVM_OPTS: "-Xms32M -Xmx64M"
+    command: [ "sh", "-c", "sleep 30 && ./kafdrop.sh" ]
+
