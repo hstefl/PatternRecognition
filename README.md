@@ -67,10 +67,10 @@ Prerequisites
 3. Bash (if you want to use scripts in `scripts/`, but they are for development only)
 
 Versions used during development:
- * Docker 27.2.0
+ * Docker 28.0.1
  * Docker Compose 1.29.2
- * Python 3.12.5
- * Fedora 40 (never tested anywhere else)
+ * Python 3.13.2
+ * Fedora 41
 
 How
 ---
