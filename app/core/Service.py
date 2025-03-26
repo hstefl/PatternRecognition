@@ -18,19 +18,19 @@ class Service(ABC):
         pass
 
     @abstractmethod
-    def start(self):
+    def start(self) -> None:
         pass
 
     @abstractmethod
-    def stop(self):
+    def stop(self) -> None:
         pass
 
 
-def start_service(service):
+def start_service(service: Service) -> None:
     """Helper function for starting service in process"""
     service.start()
 
 
-def stop_service(service):
+def stop_service(service: Service) -> None:
     """Helper function for stopping service in process"""
     service.stop()

@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-from typing import List
 
 from kafka import KafkaConsumer
 from scapy.layers.l2 import Ether
@@ -16,9 +15,10 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class NetworkTrafficAnalyzer(Service):
-    db = next(get_db())
-    __running: bool = False
-    packet_pattern_recognizers: List[PacketPattern] = [OpenPassword()]
+
+    def __init__(self):
+        self.__running: bool = False
+        self.packet_pattern_recognizers: list[PacketPattern] = [OpenPassword()]
 
     def get_name(self) -> str:
         return "Network traffic analyzer"
@@ -50,7 +50,8 @@ class NetworkTrafficAnalyzer(Service):
                 self.store_alert(recognition)
 
     def store_alert(self, recognition):
-        create_recognition(self.db, recognition)
+        with get_db() as db:
+            create_recognition(db, recognition)
 
     def __load_packet(self, message):
         packet_data = message.value

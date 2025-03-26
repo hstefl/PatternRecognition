@@ -14,15 +14,17 @@ class NetworkTrafficSniffer(Service):
     Class for sniffing network traffic and sending it into kafka for further analysis.
     """
 
-    # Flag identifying whether service is running.
-    _running: bool = False
-
     # Event for graceful shutdown of the sniffer (which runs infinitely otherwise),
     # see function `stop_filter`.
+    # TODO investigate why test fail as this is moved into constructor.
     stop_event: multiprocessing.Event = multiprocessing.Event()
 
-    # Process where sniffer is started
-    process: Process
+    def __init__(self):
+        # Flag identifying whether service is running.
+        self._running: bool = False
+
+        # Process where sniffer is started
+        self.process: Process
 
     def get_name(self) -> str:
         return "Network traffic sniffer"

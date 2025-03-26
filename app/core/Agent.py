@@ -1,5 +1,4 @@
 from concurrent.futures.process import ProcessPoolExecutor
-from typing import List
 
 from .Service import Service, start_service
 from .agent.NetworkTrafficSniffer import NetworkTrafficSniffer
@@ -11,24 +10,22 @@ class Agent:
     Agent typically starts services which collect dta on endpoint and forward them for further processing.
     """
 
-    services: List[Service] = []
-    executor: ProcessPoolExecutor = ProcessPoolExecutor()
+    def __init__(self, services: list[Service] = None):
+        self.executor = ProcessPoolExecutor()
+        self.services = services if services is not None else []
 
-    def __init__(self, services: List[Service] = None):
-        if services is None:
+        if not services:
             self.default_agent()
-        else:
-            self.services = services
 
-    def default_agent(self):
+    def default_agent(self) -> None:
         self.services.append(NetworkTrafficSniffer())
 
-    def start(self):
+    def start(self) -> None:
         # Each service will have dedicated process to run in
         for service in self.services:
             self.executor.submit(start_service, service)
 
-    def stop(self):
+    def stop(self) -> None:
         try:
             for service in self.services:
                 service.stop()

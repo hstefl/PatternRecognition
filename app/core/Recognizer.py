@@ -1,5 +1,4 @@
 from concurrent.futures.process import ProcessPoolExecutor
-from typing import List
 
 from .Service import Service, start_service
 from .recognizer.NetworkTrafficAnalyzer import NetworkTrafficAnalyzer
@@ -10,23 +9,21 @@ class Recognizer:
     Recognizer contains list of services/recognizers which analyze data and reports recognized patterns.
     """
 
-    services: List[Service] = []
-    executor: ProcessPoolExecutor = ProcessPoolExecutor()
+    def __init__(self, services: list[Service] = None):
+        self.executor = ProcessPoolExecutor()
+        self.services = services if services is not None else []
 
-    def __init__(self, services: List[Service] = None):
-        if services is None:
+        if not services:
             self.default_recognizer()
-        else:
-            self.services = services
 
-    def default_recognizer(self):
+    def default_recognizer(self) -> None:
         self.services.append(NetworkTrafficAnalyzer())
 
-    def start(self):
+    def start(self) -> None:
         for service in self.services:
             self.executor.submit(start_service, service)
 
-    def stop(self):
+    def stop(self) -> None:
         try:
             for service in self.services:
                 service.stop()

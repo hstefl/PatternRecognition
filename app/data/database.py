@@ -4,6 +4,7 @@ DB handling
  - session creation
 """
 import os
+from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -25,6 +26,7 @@ Base = declarative_base()
 
 
 # Dependency to get the database session
+@contextmanager
 def get_db():
     db = SessionLocal()
     try:
