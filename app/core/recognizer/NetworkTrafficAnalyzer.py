@@ -1,14 +1,10 @@
-import base64
-import json
 import logging
-
-from kafka import KafkaConsumer
-from scapy.layers.l2 import Ether
 
 from data.crud import create_recognition
 from data.database import get_db
 from .OpenPassword import OpenPassword
 from .PacketPattern import PacketPattern
+from .packetreader import PacketReader, PacketReaderKafka
 from ..Service import Service
 
 logging.basicConfig(level=logging.DEBUG)
@@ -19,6 +15,7 @@ class NetworkTrafficAnalyzer(Service):
     def __init__(self):
         self.__running: bool = False
         self.packet_pattern_recognizers: list[PacketPattern] = [OpenPassword()]
+        self.packet_reader: PacketReader = PacketReaderKafka()
 
     def get_name(self) -> str:
         return "Network traffic analyzer"
@@ -31,17 +28,9 @@ class NetworkTrafficAnalyzer(Service):
             return
         self.__running = True
 
-        consumer = self.__configure_kafka_consumer()
-
-        for message in consumer:
-            self.__process_message(message)
-            consumer.commit()
-
-    def __process_message(self, message):
-        encoded_packet = self.__load_packet(message)
-        packet = self.__reconstruct_packet(encoded_packet)
-
-        self.perform_recognitions(packet)
+        self.packet_reader.start()
+        for packet in self.packet_reader:
+            self.perform_recognitions(packet)
 
     def perform_recognitions(self, packet):
         for recognizer in self.packet_pattern_recognizers:
@@ -53,29 +42,6 @@ class NetworkTrafficAnalyzer(Service):
         with get_db() as db:
             create_recognition(db, recognition)
 
-    def __load_packet(self, message):
-        packet_data = message.value
-        encoded_packet = packet_data["raw_packet"]
-        return encoded_packet
-
-    def __configure_kafka_consumer(self):
-        consumer = KafkaConsumer('packets_topic',
-                                 bootstrap_servers=['kafka:9092'],
-                                 auto_offset_reset='earliest',
-                                 enable_auto_commit=False,
-                                 group_id='recognizers',
-                                 value_deserializer=lambda x: json.loads(x.decode('utf-8')))
-        consumer.subscribe(['packets_topic'])
-        return consumer
-
-    def __reconstruct_packet(self, encoded_packet):
-        # Decode the base64 encoded raw packet
-        raw_bytes = base64.b64decode(encoded_packet)
-        # Reconstruct the packet from the raw bytes
-        packet = Ether(raw_bytes)
-
-        return packet
-
     def stop(self):
+        self.packet_reader.stop()
         self.__running = False
-        raise NotImplementedError
