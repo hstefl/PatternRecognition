@@ -25,6 +25,7 @@ Installed images:
 The architecture of system is described in the README.md file.
 """
 
+import logging
 import os
 import re
 import subprocess
@@ -32,7 +33,6 @@ import time
 
 import pytest
 import requests
-import logging
 from testcontainers.compose import DockerCompose
 
 
@@ -55,7 +55,11 @@ def docker_compose():
 
     project_root = get_project_directory()
     test_compose_dir = project_root + "/docker/tests"
+    log_file_path = project_root + '/test_output.test_web_service.txt'
     os.environ['BUILD_CONTEXT'] = project_root
+
+    # Clean up old state
+    cleanup(project_root)
 
     with DockerCompose(project_root, compose_file_name="docker/tests/testing-environment.yml", build=True) as compose:
         try:
@@ -67,12 +71,28 @@ def docker_compose():
             wait_for_logs(compose, "traffic-client", "traffic client started")
         except Exception as e:
             logging.error("Error starting Docker services: %s", e)
-            subprocess.run(
-                ["docker-compose", "-f", project_root + f"/docker/tests/testing-environment.yml", "logs"],
-                check=False)
             raise
 
+        finally:
+            with open(log_file_path, "w") as f:
+                # Always show logs regardless of success or error
+                subprocess.run(
+                    ["docker", "compose", "-f", f"{project_root}/docker/tests/testing-environment.yml",
+                     "logs"],
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    check=False
+                )
+
         yield compose  # Provide the compose object for use in the tests
+        cleanup(project_root)
+
+
+def cleanup(project_root):
+    subprocess.run(
+        ["docker", "compose", "-f", f"{project_root}/docker/tests/testing-environment.yml", "down", "-v"],
+        check=False
+    )
 
 
 def test_web_service(docker_compose):
@@ -128,7 +148,8 @@ def wait_for_logs(compose, service_name, log_message, timeout=20, max_retries=5)
             time.sleep(1)
         retries += 1
         timeout *= 2  # Exponential backoff
-    raise TimeoutError(f"Service {service_name} did not output the expected log message within {timeout} seconds after {max_retries} retries")
+    raise TimeoutError(
+        f"Service {service_name} did not output the expected log message within {timeout} seconds after {max_retries} retries")
 
 
 def get_project_directory():
