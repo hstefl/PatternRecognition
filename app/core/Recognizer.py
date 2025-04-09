@@ -1,4 +1,4 @@
-from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
 
 from .Service import Service, start_service
 from .recognizer.NetworkTrafficAnalyzer import NetworkTrafficAnalyzer
@@ -10,7 +10,7 @@ class Recognizer:
     """
 
     def __init__(self, services: list[Service] = None):
-        self.executor = ProcessPoolExecutor()
+        self.executor = ThreadPoolExecutor()
         self.services = services if services is not None else []
 
         if not services:
