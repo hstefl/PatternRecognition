@@ -1,0 +1,22 @@
+[project]
+name = "PatternRecognition"
+version = "0.1.1"
+description = "This project captures network traffic, performs analysis, and provides simple reporting."
+authors = [{ name = "Jan Stefl", email = "janstefl.cz@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "confluent-kafka==2.8.2",
+    "flask==3.0.3",
+    "flask-sqlalchemy==3.0.4",
+    "kafka-python-ng==2.2.2",
+    "pandas==2.2.3",
+    "pytest~=8.2.2",
+    "python-dotenv==1.0.0",
+    "requests==2.32.3",
+    "scapy==2.5.0",
+    "six==1.16.0",
+    "sqlalchemy==2.0.32",
+    "testcontainers==4.7.1",
+]
+
