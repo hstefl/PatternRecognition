@@ -95,7 +95,7 @@ def cleanup(project_root):
     )
 
 
-def test_web_service(docker_compose):
+def test_web_open_password_detection(docker_compose):
     """
     Testing that login request send via HTTP is detected as "open password in network traffic".
 
