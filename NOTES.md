@@ -181,7 +181,7 @@ A modular pipeline to detect **TCP SYN port scans** using an LLLM. It ingests ne
 
 ---
 
-## 🧠 Summary
+## Summary
 
 > You’re building a pipeline where raw packets are ingested via Kafka, grouped and summarized into behavioral patterns over time, then analyzed by an LLM to detect port scans. By combining structured aggregation, intelligent filtering, and text+structured LLM input, you can detect and explain TCP SYN scans effectively. The system is modular, scalable, and LLM-ready with clear decision boundaries.
 
@@ -264,7 +264,7 @@ Avoid combinations that are logically or behaviorally inconsistent. Specifically
 
 ---
 
-## 🧠 For Each Valid Combination, Include:
+## For Each Valid Combination, Include:
 
 - `Time Window`  
 - `SYN Rate`  
@@ -280,7 +280,7 @@ Avoid combinations that are logically or behaviorally inconsistent. Specifically
 
 ---
 
-## 🛡️ Defensive Evaluation Policy
+## Defensive Evaluation Policy
 
 - Evaluate scanning risk by combining behavior across SYN rate, percentage, port diversity, source dispersion, and ACK response.
 - Only consider `complete response` (99–100% ACK) as confidently non-scan.

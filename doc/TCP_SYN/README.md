@@ -1,7 +1,28 @@
-Prompt for dataset generation
+# Prompt for Dataset Generation: TCP SYN Scan Detection
+
+--------------------------------------------------------
+
+## 🧠 What is a TCP SYN Scan?
+
+A **TCP SYN scan** is a common reconnaissance technique used by attackers to identify open ports on target machines. The scanner sends **TCP SYN (synchronize)** packets to multiple ports without completing the three-way handshake. If a port is open, the target responds with a **SYN-ACK**; if it is closed, it responds with a **RST**.
+
+The scanner typically does **not complete the handshake**, meaning it does not send back an ACK to the SYN-ACK. This behavior allows the scanner to:
+- Probe many ports quickly,
+- Avoid full connections (reducing detection footprint),
+- Identify services listening on specific ports.
+
+Such scans can be:
+- **Aggressive and centralized** (e.g., thousands of ports in seconds from one IP),
+- **Slow and distributed** (e.g., low-rate scans from many IPs across hours),
+- **Noisy or stealthy**, depending on SYN volume, diversity of sources, and responses received.
+
+This dataset aims to simulate **sliding time-window summaries** of such behavior, suitable for detection models — especially LLMs — by generating realistic permutations of scan features and their context-aware classifications.
+
 ---
 
-Generate a table that includes **all valid permutations** of categorical attributes used to characterize a **TCP SYN scan**.
+## 📊 Generate
+
+Generate a table (into downloadable CSV file) that includes **all valid permutations** of categorical attributes used to characterize a **TCP SYN scan**.
 
 These attributes describe network traffic summaries over short sliding time windows. Use the categories defined below.
 
@@ -23,9 +44,11 @@ Avoid combinations that are logically or behaviorally inconsistent. Specifically
 4. **Source Diversity vs. SYN Rate**
    - If `Source Diversity` is `highly distributed`, but `SYN Rate` is `very low`, discard unless `Port Spread` is `broad sweep` (indicating coordinated distributed scanning).
 
+5. **Port spread vs. Source Diversity**
+   - If `Port Spread` is `one`, then `Source Diversity` must be only `centralized`.
 ---
 
-## Categories
+## 🔢 Categories
 
 ### 1. **Time Window** (duration of the scan window):
 - `very-short` (0–1 sec)
@@ -50,6 +73,7 @@ Avoid combinations that are logically or behaviorally inconsistent. Specifically
 - `overwhelming` (90–100%)
 
 ### 4. **Port Spread** (number of unique destination ports targeted):
+- `one` (1)
 - `a few` (2–4)
 - `several` (5–9)
 - `many` (10–99)
@@ -70,7 +94,35 @@ Avoid combinations that are logically or behaviorally inconsistent. Specifically
 
 ---
 
-## For Each Valid Combination, Include:
+## 📈 Evaluation Dimensions
+
+### 7. **Scan Intensity**
+- Qualitative severity of the observed scan pattern.
+- Values: `None`, `Low`, `Moderate`, `High`, `Very High`
+
+### 8. **Risk Assessment**
+- A categorized risk level associated with the pattern, especially in the context of critical infrastructure.
+- Values: `none`, `low`, `moderate`, `elevated`, `critical`
+
+### 9. **Scan Archetype**
+- Classification of the likely scanning behavior type:
+  - `classic`: fast, centralized, brute-force scans
+  - `stealth`: slow or low-volume scans attempting to evade detection
+  - `distributed`: sourced from many IPs, coordinated across nodes
+  - `obfuscated`: hidden among normal traffic, or noisy but disguised
+  - `likely benign`: pattern resembles normal application behavior
+  - `ambiguous`: inconclusive or borderline cases
+
+### 10. **Suggested Action**
+- Operational guidance based on risk level:
+  - Examples: `Monitor only`, `Alert SOC`, `Throttle source IP`, `Block temporarily`
+
+### 11. **Explanation**
+- A short, structured justification describing **why** the classification, archetype, and action were chosen (e.g., “High SYN rate and no responses over short time from single source = classic scan”).
+
+---
+
+## ✅ For Each Valid Combination, Include:
 
 - `Time Window`  
 - `SYN Rate`  
@@ -78,15 +130,15 @@ Avoid combinations that are logically or behaviorally inconsistent. Specifically
 - `Port Spread`  
 - `ACK Response Rate`  
 - `Source Diversity`  
-- **Scan Intensity** (None / Low / Moderate / High / Very High)  
-- **Risk Assessment** (short sentence in the context of critical infrastructure)  
-- **Explanation** (concise logic for the classification)  
-- **Suggested Action** (e.g., “Monitor only”, “Alert SOC”, “Throttle source IP”, “Block temporarily”)  
-- **Scan Archetype** (`classic`, `stealth`, `distributed`, `obfuscated`, `likely benign`, `ambiguous`)
+- `Scan Intensity`  
+- `Risk Assessment`  
+- `Scan Archetype`  
+- `Suggested Action`  
+- `Explanation`
 
 ---
 
-## Defensive Evaluation Policy
+## 🛡️ Defensive Evaluation Policy
 
 - Evaluate scanning risk by combining behavior across SYN rate, percentage, port diversity, source dispersion, and ACK response.
 - Only consider `complete response` (99–100% ACK) as confidently non-scan.
